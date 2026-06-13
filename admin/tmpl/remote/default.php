@@ -28,6 +28,7 @@ use Joomla\CMS\Router\Route;
 <form action="<?php echo Route::_('index.php?option=com_content_api_grabber&view=remote'); ?>" method="get" class="mb-3">
     <input type="hidden" name="option" value="com_content_api_grabber">
     <input type="hidden" name="view" value="remote">
+    <input type="hidden" name="limit" value="<?php echo (int) $this->limit; ?>">
     <div class="row align-items-end">
         <div class="col-md-6">
             <label for="source_id" class="form-label"><?php echo Text::_('COM_CONTENT_API_GRABBER_SELECT_SOURCE'); ?></label>
@@ -85,6 +86,31 @@ use Joomla\CMS\Router\Route;
                         <?php endforeach; ?>
                         </tbody>
                     </table>
+
+                    <?php
+                    $pgBase = 'index.php?option=com_content_api_grabber&view=remote&source_id=' . (int) $this->sourceId . '&limit=' . (int) $this->limit;
+                    $from   = $this->offset + 1;
+                    $to     = $this->offset + \count($this->articles);
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">
+                            <?php echo Text::sprintf('COM_CONTENT_API_GRABBER_SHOWING', $from, $to, $this->total !== null ? $this->total : '?'); ?>
+                        </small>
+                        <div class="btn-group">
+                            <?php if ($this->offset > 0) : ?>
+                                <a class="btn btn-outline-secondary btn-sm"
+                                   href="<?php echo Route::_($pgBase . '&offset=' . max(0, $this->offset - $this->limit)); ?>">
+                                    <span class="icon-arrow-left" aria-hidden="true"></span> <?php echo Text::_('JPREV'); ?>
+                                </a>
+                            <?php endif; ?>
+                            <?php if ($this->hasNext) : ?>
+                                <a class="btn btn-outline-secondary btn-sm"
+                                   href="<?php echo Route::_($pgBase . '&offset=' . ($this->offset + $this->limit)); ?>">
+                                    <?php echo Text::_('JNEXT'); ?> <span class="icon-arrow-right" aria-hidden="true"></span>
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-4">

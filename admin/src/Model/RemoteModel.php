@@ -102,7 +102,8 @@ class RemoteModel extends FormModel
      * @param   int  $limit     Page size.
      * @param   int  $offset    Offset.
      *
-     * @return  array  Normalized list: [{id, title, state, created}]
+     * @return  array  ['items' => object[], 'hasNext' => bool, 'total' => int|null,
+     *                  'offset' => int, 'limit' => int]
      *
      * @throws  \RuntimeException
      */
@@ -128,7 +129,53 @@ class RemoteModel extends FormModel
             ];
         }
 
-        return $items;
+        return [
+            'items'   => $items,
+            'hasNext' => (bool) ($result['hasNext'] ?? (\count($items) >= $limit)),
+            'total'   => $result['total'] ?? null,
+            'offset'  => $offset,
+            'limit'   => $limit,
+        ];
+    }
+
+    /**
+     * Test connectivity/credentials for given url + token (used by the Source form).
+     * Returns ['ok' => bool, 'message' => string].
+     *
+     * @param   string  $url    Remote site root.
+     * @param   string  $token  Plaintext token.
+     *
+     * @return  array
+     */
+    public function testConnection(string $url, string $token): array
+    {
+        try {
+            $result = RestHelper::listArticles($url, $token, 1, 0);
+            $total  = $result['total'];
+
+            return [
+                'ok'      => true,
+                'message' => $total !== null
+                    ? \Joomla\CMS\Language\Text::sprintf('COM_CONTENT_API_GRABBER_TEST_OK_COUNT', $total)
+                    : \Joomla\CMS\Language\Text::_('COM_CONTENT_API_GRABBER_TEST_OK'),
+            ];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Resolve the plaintext token for a stored source (used when the form token is blank).
+     *
+     * @param   int  $id  Source id.
+     *
+     * @return  string
+     */
+    public function getStoredToken(int $id): string
+    {
+        $source = $this->getSource($id);
+
+        return $source ? (string) $source->token : '';
     }
 
     /**

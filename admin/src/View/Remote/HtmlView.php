@@ -23,6 +23,10 @@ class HtmlView extends BaseHtmlView
     protected $articles = [];
     protected $sourceId = 0;
     protected $error = '';
+    protected $limit = 20;
+    protected $offset = 0;
+    protected $hasNext = false;
+    protected $total = null;
 
     /**
      * Render the view.
@@ -36,13 +40,19 @@ class HtmlView extends BaseHtmlView
         /** @var \Nickpsal\Component\ContentApiGrabber\Administrator\Model\RemoteModel $model */
         $model = $this->getModel();
 
+        $input          = Factory::getApplication()->getInput();
         $this->form     = $this->get('Form');
         $this->sources  = $model->getSources();
-        $this->sourceId = (int) Factory::getApplication()->getInput()->getInt('source_id', 0);
+        $this->sourceId = (int) $input->getInt('source_id', 0);
+        $this->limit    = max(5, min(100, (int) $input->getInt('limit', 20)));
+        $this->offset   = max(0, (int) $input->getInt('offset', 0));
 
         if ($this->sourceId) {
             try {
-                $this->articles = $model->getRemoteArticles($this->sourceId, 100, 0);
+                $page           = $model->getRemoteArticles($this->sourceId, $this->limit, $this->offset);
+                $this->articles = $page['items'];
+                $this->hasNext  = $page['hasNext'];
+                $this->total    = $page['total'];
             } catch (\Throwable $e) {
                 $this->error = $e->getMessage();
             }

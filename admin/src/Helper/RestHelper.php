@@ -108,7 +108,7 @@ class RestHelper
      * @param   int     $limit    Page size.
      * @param   int     $offset   Page offset.
      *
-     * @return  array  ['items' => object[], 'total' => int|null]
+     * @return  array  ['items' => object[], 'total' => int|null, 'hasNext' => bool]
      *
      * @throws  \RuntimeException
      */
@@ -121,13 +121,19 @@ class RestHelper
         $json  = self::get(self::endpoint($baseUrl, '?' . $query), $token);
         $items = \is_array($json->data ?? null) ? $json->data : [];
 
+        // A "next" link means there are more pages after this one.
+        $hasNext = isset($json->links->next);
+
+        // Best-effort total from the "last" page link offset (JSON:API style).
         $total = null;
 
-        if (isset($json->meta->{'total-pages'})) {
+        if (isset($json->links->last) && preg_match('/offset(?:%5D|\])=(\d+)/', (string) $json->links->last, $m)) {
+            $total = (int) $m[1] + $limit;
+        } elseif (isset($json->meta->{'total-pages'})) {
             $total = (int) $json->meta->{'total-pages'} * $limit;
         }
 
-        return ['items' => $items, 'total' => $total];
+        return ['items' => $items, 'total' => $total, 'hasNext' => $hasNext];
     }
 
     /**
