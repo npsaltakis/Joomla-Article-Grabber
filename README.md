@@ -1,4 +1,8 @@
-# Joomla Article Grabber
+<p align="center">
+  <img src="logo.svg" alt="Joomla Article Grabber" width="128" height="128">
+</p>
+
+<h1 align="center">Joomla Article Grabber</h1>
 
 A Joomla 5 / 6 administrator component to transfer `com_content` articles (with their
 images) between your Joomla sites.

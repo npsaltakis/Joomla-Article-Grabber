@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2E73B8"/>
+      <stop offset="1" stop-color="#163F6B"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFA64D"/>
+      <stop offset="1" stop-color="#F26419"/>
+    </linearGradient>
+    <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#0A2240" flood-opacity="0.30"/>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="0" y="0" width="512" height="256" rx="112" fill="#FFFFFF" opacity="0.05"/>
+
+  <!-- article / document -->
+  <g filter="url(#sh)">
+    <path d="M150 104 h146 l52 52 v250 a18 18 0 0 1 -18 18 h-180 a18 18 0 0 1 -18 -18 v-284 a18 18 0 0 1 18 -18 z" fill="#FFFFFF"/>
+    <path d="M296 104 l52 52 h-52 z" fill="#CBDAEA"/>
+    <rect x="180" y="200" width="132" height="18" rx="9" fill="#BFD0E3"/>
+    <rect x="180" y="240" width="132" height="18" rx="9" fill="#BFD0E3"/>
+    <rect x="180" y="280" width="90"  height="18" rx="9" fill="#BFD0E3"/>
+  </g>
+
+  <!-- "grab" badge: download / pull arrow -->
+  <g filter="url(#sh)">
+    <circle cx="358" cy="358" r="106" fill="url(#acc)" stroke="#FFFFFF" stroke-width="12"/>
+    <path d="M358 300 v74 M320 344 l38 42 38 -42" fill="none" stroke="#FFFFFF"
+          stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="312" y="402" width="92" height="22" rx="11" fill="#FFFFFF"/>
+  </g>
+</svg>
