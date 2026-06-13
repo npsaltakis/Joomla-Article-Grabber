@@ -5,10 +5,10 @@
         <description>Transfer com_content articles (with images) between Joomla sites via REST pull or XML.</description>
         <element>com_content_api_grabber</element>
         <type>component</type>
-        <version>1.1.9</version>
+        <version>1.2.0</version>
         <infourl title="Joomla Article Grabber">https://github.com/npsaltakis/Joomla-Article-Grabber</infourl>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/npsaltakis/Joomla-Article-Grabber/releases/download/v1.1.9/com_content_api_grabber-1.1.9.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/npsaltakis/Joomla-Article-Grabber/releases/download/v1.2.0/com_content_api_grabber-1.2.0.zip</downloadurl>
         </downloads>
         <tags>
             <tag>stable</tag>
