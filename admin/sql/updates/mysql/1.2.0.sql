@@ -1,0 +1,1 @@
+-- 1.2.0: no schema changes (search, tags, dates, featured, skip-dupes are code-only)

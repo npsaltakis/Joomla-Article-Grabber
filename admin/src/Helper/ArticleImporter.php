@@ -27,20 +27,20 @@ class ArticleImporter
      * Import a normalized article.
      *
      * @param   array   $article   Keys: title, alias, language, introtext, fulltext,
-     *                              metakey, metadesc, images[image_intro, image_intro_alt,
-     *                              image_intro_caption, image_fulltext, image_fulltext_alt,
-     *                              image_fulltext_caption].
+     *                              metakey, metadesc, tags (string[]), created, publish_up,
+     *                              publish_down, images[…].
      * @param   int     $catid     Target category id.
      * @param   int     $userId    Author user id.
      * @param   int     $state     Published state.
      * @param   string  $imageBase When non-empty, RELATIVE image URLs are made absolute
      *                             against this base (the remote site root) before download.
+     * @param   bool    $featured  Whether to add the article to the front page.
      *
      * @return  array  ['title', 'article_id', 'images_ok', 'images_failed']
      *
      * @throws  \RuntimeException
      */
-    public static function import(array $article, int $catid, int $userId, int $state, string $imageBase = ''): array
+    public static function import(array $article, int $catid, int $userId, int $state, string $imageBase = '', bool $featured = false): array
     {
         $params  = ComponentHelper::getParams('com_content_api_grabber');
         $baseDir = trim($params->get('image_folder', 'images/grabbed'), '/');
@@ -112,7 +112,8 @@ class ArticleImporter
             $fulltext,
             $introImage,
             $fullImage,
-            (array) $images
+            (array) $images,
+            $featured
         );
 
         return [
@@ -139,7 +140,8 @@ class ArticleImporter
         string $fulltext,
         string $introImage,
         string $fullImage,
-        array $images
+        array $images,
+        bool $featured = false
     ): int {
         $mvc   = Factory::getApplication()->bootComponent('com_content')->getMVCFactory();
         $model = $mvc->createModel('Article', 'Administrator', ['ignore_request' => true]);
@@ -152,6 +154,8 @@ class ArticleImporter
         $alias = ($article['alias'] ?? '') !== '' ? $article['alias'] : OutputFilter::stringUrlSafe($title);
 
         [$title, $alias] = self::ensureUniqueAlias($catid, $alias, $title);
+
+        $tagIds = self::findOrCreateTags($article['tags'] ?? []);
 
         $payload = [
             'id'         => 0,
@@ -166,6 +170,8 @@ class ArticleImporter
             'access'     => (int) Factory::getApplication()->get('access', 1),
             'metakey'    => $article['metakey'] ?? '',
             'metadesc'   => $article['metadesc'] ?? '',
+            'featured'   => $featured ? 1 : 0,
+            'tags'       => $tagIds,
             'images'     => json_encode([
                 'image_intro'            => $introImage,
                 'image_intro_alt'        => $images['image_intro_alt'] ?? '',
@@ -177,6 +183,23 @@ class ArticleImporter
                 'float_fulltext'         => '',
             ]),
         ];
+
+        // Preserve original publication dates when provided by the source.
+        $created    = self::normalizeDate((string) ($article['created'] ?? ''));
+        $publishUp  = self::normalizeDate((string) ($article['publish_up'] ?? ''));
+        $publishDown = self::normalizeDate((string) ($article['publish_down'] ?? ''));
+
+        if ($created !== '') {
+            $payload['created'] = $created;
+        }
+
+        if ($publishUp !== '') {
+            $payload['publish_up'] = $publishUp;
+        }
+
+        if ($publishDown !== '' && $publishDown !== '0000-00-00 00:00:00') {
+            $payload['publish_down'] = $publishDown;
+        }
 
         if (!$model->save($payload)) {
             throw new \RuntimeException('Article save failed: ' . $model->getError());
@@ -212,6 +235,93 @@ class ArticleImporter
 
             $alias = StringHelper::increment($alias, 'dash');
             $title = StringHelper::increment($title);
+        }
+    }
+
+    /**
+     * Find local tags by name, creating them if they do not yet exist.
+     *
+     * @param   string[]  $names  Tag titles from the remote article.
+     *
+     * @return  int[]  Local tag IDs.
+     */
+    private static function findOrCreateTags(array $names): array
+    {
+        if (empty($names)) {
+            return [];
+        }
+
+        /** @var DatabaseInterface $db */
+        $db  = Factory::getContainer()->get(DatabaseInterface::class);
+        $ids = [];
+
+        foreach ($names as $name) {
+            $name = trim((string) $name);
+
+            if ($name === '') {
+                continue;
+            }
+
+            $query = $db->getQuery(true)
+                ->select($db->quoteName('id'))
+                ->from($db->quoteName('#__tags'))
+                ->where($db->quoteName('title') . ' = :title')
+                ->where($db->quoteName('published') . ' = 1')
+                ->bind(':title', $name, ParameterType::STRING);
+
+            $id = (int) $db->setQuery($query)->loadResult();
+
+            if (!$id) {
+                try {
+                    $mvc   = Factory::getApplication()->bootComponent('com_tags')->getMVCFactory();
+                    $model = $mvc->createModel('Tag', 'Administrator', ['ignore_request' => true]);
+                    $alias = OutputFilter::stringUrlSafe($name);
+
+                    $model->save([
+                        'id'          => 0,
+                        'title'       => $name,
+                        'alias'       => $alias,
+                        'parent_id'   => 1,
+                        'published'   => 1,
+                        'language'    => '*',
+                        'access'      => 1,
+                        'description' => '',
+                        'note'        => '',
+                    ]);
+                    $id = (int) $model->getState('tag.id');
+                } catch (\Throwable $e) {
+                    Log::add('Could not create tag "' . $name . '": ' . $e->getMessage(), Log::WARNING, 'com_content_api_grabber');
+                }
+            }
+
+            if ($id) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
+     * Normalize an ISO 8601 or MySQL datetime string to MySQL DATETIME format.
+     * Returns an empty string when the input is blank or unparseable.
+     *
+     * @param   string  $date  Raw date string from the remote API.
+     *
+     * @return  string
+     */
+    private static function normalizeDate(string $date): string
+    {
+        $date = trim($date);
+
+        if ($date === '' || $date === '0000-00-00 00:00:00') {
+            return $date;
+        }
+
+        try {
+            return (new \DateTime($date))->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            return '';
         }
     }
 }

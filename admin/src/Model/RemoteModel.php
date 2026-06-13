@@ -51,6 +51,28 @@ class RemoteModel extends FormModel
     }
 
     /**
+     * Check whether a remote article has already been imported from the given source URL.
+     *
+     * @param   string  $sourceUrl  The remote site root URL stored in the log.
+     * @param   int     $remoteId   The remote article id.
+     *
+     * @return  bool
+     */
+    public function isAlreadyImported(string $sourceUrl, int $remoteId): bool
+    {
+        $db    = $this->getDatabase();
+        $query = $db->getQuery(true)
+            ->select('COUNT(*)')
+            ->from($db->quoteName('#__cgrabber_log'))
+            ->where($db->quoteName('source_url') . ' = :url')
+            ->where($db->quoteName('source_id') . ' = :sid')
+            ->bind(':url', $sourceUrl, ParameterType::STRING)
+            ->bind(':sid', $remoteId, ParameterType::INTEGER);
+
+        return (int) $db->setQuery($query)->loadResult() > 0;
+    }
+
+    /**
      * Get the published sources for the picker.
      *
      * @return  array
@@ -96,18 +118,43 @@ class RemoteModel extends FormModel
     }
 
     /**
-     * Fetch a page of articles from a remote source.
+     * Fetch the list of content categories from a remote source.
+     * Returns an empty array on any error (category filter is optional).
      *
      * @param   int  $sourceId  Source id.
-     * @param   int  $limit     Page size.
-     * @param   int  $offset    Offset.
+     *
+     * @return  array  Objects with ->id and ->title.
+     */
+    public function getRemoteCategories(int $sourceId): array
+    {
+        $source = $this->getSource($sourceId);
+
+        if (!$source) {
+            return [];
+        }
+
+        try {
+            return RestHelper::listCategories($source->url, $source->token);
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fetch a page of articles from a remote source.
+     *
+     * @param   int     $sourceId  Source id.
+     * @param   int     $limit     Page size.
+     * @param   int     $offset    Offset.
+     * @param   string  $search    Optional title/alias search string.
+     * @param   int     $catId     Optional remote category id filter (0 = all).
      *
      * @return  array  ['items' => object[], 'hasNext' => bool, 'total' => int|null,
      *                  'offset' => int, 'limit' => int]
      *
      * @throws  \RuntimeException
      */
-    public function getRemoteArticles(int $sourceId, int $limit = 50, int $offset = 0): array
+    public function getRemoteArticles(int $sourceId, int $limit = 50, int $offset = 0, string $search = '', int $catId = 0): array
     {
         $source = $this->getSource($sourceId);
 
@@ -115,7 +162,7 @@ class RemoteModel extends FormModel
             throw new \RuntimeException(\Joomla\CMS\Language\Text::_('COM_CONTENT_API_GRABBER_ERROR_SOURCE_NOT_FOUND'));
         }
 
-        $result = RestHelper::listArticles($source->url, $source->token, $limit, $offset);
+        $result = RestHelper::listArticles($source->url, $source->token, $limit, $offset, $search, $catId);
 
         $items = [];
 
@@ -181,17 +228,19 @@ class RemoteModel extends FormModel
     /**
      * Pull selected remote articles into the local site.
      *
-     * @param   int    $sourceId    Source id.
-     * @param   int[]  $articleIds  Remote article ids to pull.
-     * @param   int    $catid       Target category.
-     * @param   int    $userId      Author.
-     * @param   int    $state       Published state.
+     * @param   int    $sourceId        Source id.
+     * @param   int[]  $articleIds      Remote article ids to pull.
+     * @param   int    $catid           Target category.
+     * @param   int    $userId          Author.
+     * @param   int    $state           Published state.
+     * @param   bool   $skipDuplicates  Skip articles already present in the import log.
+     * @param   bool   $featured        Mark imported articles as front-page featured.
      *
-     * @return  array  ['ok' => int, 'failed' => int, 'messages' => string[]]
+     * @return  array  ['ok' => int, 'skipped' => int, 'failed' => int, 'messages' => string[]]
      *
      * @throws  \RuntimeException
      */
-    public function pull(int $sourceId, array $articleIds, int $catid, int $userId, int $state): array
+    public function pull(int $sourceId, array $articleIds, int $catid, int $userId, int $state, bool $skipDuplicates = false, bool $featured = false): array
     {
         $source = $this->getSource($sourceId);
 
@@ -200,18 +249,25 @@ class RemoteModel extends FormModel
         }
 
         $ok       = 0;
+        $skipped  = 0;
         $failed   = 0;
         $messages = [];
 
         foreach ($articleIds as $remoteId) {
             $remoteId = (int) $remoteId;
 
+            if ($skipDuplicates && $this->isAlreadyImported($source->url, $remoteId)) {
+                $skipped++;
+                $messages[] = 'ID ' . $remoteId . ': ' . \Joomla\CMS\Language\Text::_('COM_CONTENT_API_GRABBER_SKIP_DUPLICATE');
+                continue;
+            }
+
             try {
                 $resource = RestHelper::getArticle($source->url, $source->token, $remoteId);
                 $article  = $this->normalize($resource);
 
                 // Images are absolutized against the remote site root.
-                $result = ArticleImporter::import($article, $catid, $userId, $state, $source->url);
+                $result = ArticleImporter::import($article, $catid, $userId, $state, $source->url, $featured);
 
                 $this->logPull($source, $remoteId, $result, $userId);
 
@@ -225,20 +281,21 @@ class RemoteModel extends FormModel
             }
         }
 
-        return ['ok' => $ok, 'failed' => $failed, 'messages' => $messages];
+        return ['ok' => $ok, 'skipped' => $skipped, 'failed' => $failed, 'messages' => $messages];
     }
 
     /**
      * Normalize a JSON:API article resource into the ArticleImporter payload.
      *
-     * @param   object  $resource  The remote resource.
+     * @param   object  $resource  The remote resource (may have ->_included attached by RestHelper).
      *
      * @return  array
      */
     private function normalize(object $resource): array
     {
-        $a   = $resource->attributes ?? new \stdClass();
-        $img = (array) ($a->images ?? []);
+        $a        = $resource->attributes ?? new \stdClass();
+        $img      = (array) ($a->images ?? []);
+        $included = \is_array($resource->_included ?? null) ? $resource->_included : [];
 
         $intro = (string) ($a->introtext ?? '');
         $full  = (string) ($a->fulltext ?? '');
@@ -248,15 +305,50 @@ class RemoteModel extends FormModel
             $intro = (string) $a->text;
         }
 
+        // --- Tags ---
+        // The Joomla REST API can return tags in different shapes depending on version/config:
+        //   (a) attributes.tags = [{id, title}, ...]          — direct array with titles
+        //   (b) attributes.tags = {data: [{type:"tags",id:"X"}, ...]} — JSON:API relationship;
+        //       titles come from the response's "included" section (attached as _included)
+        $tags    = [];
+        $rawTags = $a->tags ?? null;
+
+        if (\is_array($rawTags)) {
+            foreach ($rawTags as $tag) {
+                $title = \is_object($tag) ? (string) ($tag->title ?? '') : (string) $tag;
+
+                if ($title !== '') {
+                    $tags[] = $title;
+                }
+            }
+        } elseif (\is_object($rawTags) && \is_array($rawTags->data ?? null)) {
+            // Collect the referenced tag IDs then resolve titles from included.
+            $tagIds = array_map(static fn($t) => (string) ($t->id ?? ''), $rawTags->data);
+
+            foreach ($included as $inc) {
+                if (($inc->type ?? '') === 'tags' && \in_array((string) ($inc->id ?? ''), $tagIds, true)) {
+                    $title = (string) ($inc->attributes->title ?? '');
+
+                    if ($title !== '') {
+                        $tags[] = $title;
+                    }
+                }
+            }
+        }
+
         return [
-            'title'     => (string) ($a->title ?? ''),
-            'alias'     => (string) ($a->alias ?? ''),
-            'language'  => (string) ($a->language ?? '*') ?: '*',
-            'introtext' => $intro,
-            'fulltext'  => $full,
-            'metakey'   => (string) ($a->metakey ?? ''),
-            'metadesc'  => (string) ($a->metadesc ?? ''),
-            'images'    => [
+            'title'        => (string) ($a->title ?? ''),
+            'alias'        => (string) ($a->alias ?? ''),
+            'language'     => (string) ($a->language ?? '*') ?: '*',
+            'introtext'    => $intro,
+            'fulltext'     => $full,
+            'metakey'      => (string) ($a->metakey ?? ''),
+            'metadesc'     => (string) ($a->metadesc ?? ''),
+            'tags'         => $tags,
+            'created'      => (string) ($a->created ?? ''),
+            'publish_up'   => (string) ($a->publish_up ?? ''),
+            'publish_down' => (string) ($a->publish_down ?? ''),
+            'images'       => [
                 'image_intro'            => (string) ($img['image_intro'] ?? ''),
                 'image_intro_alt'        => (string) ($img['image_intro_alt'] ?? ''),
                 'image_intro_caption'    => (string) ($img['image_intro_caption'] ?? ''),

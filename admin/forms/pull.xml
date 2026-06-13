@@ -27,4 +27,20 @@
         <option value="1">JPUBLISHED</option>
         <option value="0">JUNPUBLISHED</option>
     </field>
+
+    <field
+        name="featured"
+        type="checkbox"
+        label="COM_CONTENT_API_GRABBER_FIELD_FEATURED_LABEL"
+        description="COM_CONTENT_API_GRABBER_FIELD_FEATURED_DESC"
+        value="1"
+    />
+
+    <field
+        name="skip_duplicates"
+        type="checkbox"
+        label="COM_CONTENT_API_GRABBER_FIELD_SKIP_DUPLICATES_LABEL"
+        description="COM_CONTENT_API_GRABBER_FIELD_SKIP_DUPLICATES_DESC"
+        value="1"
+    />
 </form>

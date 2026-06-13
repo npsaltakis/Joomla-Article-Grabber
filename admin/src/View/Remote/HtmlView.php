@@ -19,14 +19,17 @@ use Joomla\CMS\Toolbar\ToolbarHelper;
 class HtmlView extends BaseHtmlView
 {
     protected $form;
-    protected $sources = [];
-    protected $articles = [];
-    protected $sourceId = 0;
-    protected $error = '';
-    protected $limit = 20;
-    protected $offset = 0;
-    protected $hasNext = false;
-    protected $total = null;
+    protected $sources           = [];
+    protected $articles          = [];
+    protected $sourceId          = 0;
+    protected $error             = '';
+    protected $limit             = 20;
+    protected $offset            = 0;
+    protected $hasNext           = false;
+    protected $total             = null;
+    protected $search            = '';
+    protected $catId             = 0;
+    protected $remoteCategories  = [];
 
     /**
      * Render the view.
@@ -46,6 +49,8 @@ class HtmlView extends BaseHtmlView
         $this->sourceId = (int) $input->getInt('source_id', 0);
         $this->limit    = max(5, min(100, (int) $input->getInt('limit', 20)));
         $this->offset   = max(0, (int) $input->getInt('offset', 0));
+        $this->search   = trim($input->getString('search', ''));
+        $this->catId    = (int) $input->getInt('cat_id', 0);
 
         // Pre-select the source's saved default category in the pull form.
         if ($this->sourceId && $this->form) {
@@ -58,8 +63,10 @@ class HtmlView extends BaseHtmlView
         }
 
         if ($this->sourceId) {
+            $this->remoteCategories = $model->getRemoteCategories($this->sourceId);
+
             try {
-                $page           = $model->getRemoteArticles($this->sourceId, $this->limit, $this->offset);
+                $page           = $model->getRemoteArticles($this->sourceId, $this->limit, $this->offset, $this->search, $this->catId);
                 $this->articles = $page['items'];
                 $this->hasNext  = $page['hasNext'];
                 $this->total    = $page['total'];

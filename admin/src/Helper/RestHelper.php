@@ -51,6 +51,18 @@ class RestHelper
     }
 
     /**
+     * Build the API endpoint for content categories.
+     *
+     * @param   string  $baseUrl  The remote site root.
+     *
+     * @return  string
+     */
+    private static function categoriesEndpoint(string $baseUrl): string
+    {
+        return rtrim($baseUrl, '/') . '/api/index.php/v1/content/categories';
+    }
+
+    /**
      * Perform an authenticated GET against the remote API and return decoded JSON.
      *
      * @param   string  $url      Full URL.
@@ -107,16 +119,26 @@ class RestHelper
      * @param   string  $token    Plaintext Joomla API token.
      * @param   int     $limit    Page size.
      * @param   int     $offset   Page offset.
+     * @param   string  $search   Optional title/alias search string.
+     * @param   int     $catId    Optional remote category id filter (0 = all).
      *
      * @return  array  ['items' => object[], 'total' => int|null, 'hasNext' => bool]
      *
      * @throws  \RuntimeException
      */
-    public static function listArticles(string $baseUrl, string $token, int $limit = 50, int $offset = 0): array
+    public static function listArticles(string $baseUrl, string $token, int $limit = 50, int $offset = 0, string $search = '', int $catId = 0): array
     {
-        $query = http_build_query([
-            'page' => ['limit' => $limit, 'offset' => $offset],
-        ]);
+        $params = ['page' => ['limit' => $limit, 'offset' => $offset]];
+
+        if ($search !== '') {
+            $params['filter']['search'] = $search;
+        }
+
+        if ($catId > 0) {
+            $params['filter']['catid'] = $catId;
+        }
+
+        $query = http_build_query($params);
 
         $json  = self::get(self::endpoint($baseUrl, '?' . $query), $token);
         $items = \is_array($json->data ?? null) ? $json->data : [];
@@ -139,11 +161,15 @@ class RestHelper
     /**
      * Fetch a single article (full attributes) from the remote site.
      *
+     * The returned object is the JSON:API resource (->id, ->attributes).
+     * An extra ->_included property is attached with the response's "included"
+     * array so that callers can resolve tag titles from the related data.
+     *
      * @param   string  $baseUrl  Remote site root.
      * @param   string  $token    Plaintext Joomla API token.
      * @param   int     $id       Remote article id.
      *
-     * @return  object  The JSON:API resource object (has ->id and ->attributes).
+     * @return  object  The JSON:API resource object.
      *
      * @throws  \RuntimeException
      */
@@ -155,7 +181,48 @@ class RestHelper
             throw new \RuntimeException('Remote article ' . $id . ' not found.');
         }
 
-        return $json->data;
+        $resource            = $json->data;
+        $resource->_included = \is_array($json->included ?? null) ? $json->included : [];
+
+        return $resource;
+    }
+
+    /**
+     * Fetch the list of published content categories from the remote site.
+     *
+     * @param   string  $baseUrl  Remote site root.
+     * @param   string  $token    Plaintext Joomla API token.
+     * @param   int     $timeout  Timeout in seconds.
+     *
+     * @return  array  Array of objects with ->id and ->title.
+     *
+     * @throws  \RuntimeException
+     */
+    public static function listCategories(string $baseUrl, string $token, int $timeout = 20): array
+    {
+        $query = http_build_query([
+            'page'   => ['limit' => 200],
+            'filter' => ['published' => 1],
+        ]);
+
+        $json  = self::get(self::categoriesEndpoint($baseUrl) . '?' . $query, $token, $timeout);
+        $items = \is_array($json->data ?? null) ? $json->data : [];
+        $cats  = [];
+
+        foreach ($items as $item) {
+            $a = $item->attributes ?? null;
+
+            if (!$a) {
+                continue;
+            }
+
+            $cats[] = (object) [
+                'id'    => (int) ($item->id ?? 0),
+                'title' => (string) ($a->title ?? ''),
+            ];
+        }
+
+        return $cats;
     }
 
     /**

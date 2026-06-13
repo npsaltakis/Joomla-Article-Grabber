@@ -24,15 +24,18 @@ use Joomla\CMS\Router\Route;
     <?php return; ?>
 <?php endif; ?>
 
-<!-- Source picker (reloads the page) -->
-<form action="<?php echo Route::_('index.php?option=com_content_api_grabber&view=remote'); ?>" method="get" class="mb-3">
+<!-- Source + filter bar (all GET params in one form) -->
+<form action="<?php echo Route::_('index.php?option=com_content_api_grabber&view=remote'); ?>" method="get" class="mb-3" id="cagFilterForm">
     <input type="hidden" name="option" value="com_content_api_grabber">
     <input type="hidden" name="view" value="remote">
     <input type="hidden" name="limit" value="<?php echo (int) $this->limit; ?>">
-    <div class="row align-items-end">
-        <div class="col-md-6">
+    <input type="hidden" name="offset" value="0">
+
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
             <label for="source_id" class="form-label"><?php echo Text::_('COM_CONTENT_API_GRABBER_SELECT_SOURCE'); ?></label>
-            <select name="source_id" id="source_id" class="form-select" onchange="this.form.submit()">
+            <select name="source_id" id="source_id" class="form-select"
+                    onchange="['cag_cat_id','cag_search'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});this.form.submit();">
                 <option value="0">&mdash;</option>
                 <?php foreach ($this->sources as $s) : ?>
                     <option value="<?php echo (int) $s->id; ?>" <?php echo $this->sourceId === (int) $s->id ? 'selected' : ''; ?>>
@@ -41,6 +44,43 @@ use Joomla\CMS\Router\Route;
                 <?php endforeach; ?>
             </select>
         </div>
+
+        <?php if ($this->sourceId && !empty($this->remoteCategories)) : ?>
+        <div class="col-md-3">
+            <label for="cag_cat_id" class="form-label"><?php echo Text::_('COM_CONTENT_API_GRABBER_FILTER_CATEGORY'); ?></label>
+            <select name="cat_id" id="cag_cat_id" class="form-select" onchange="this.form.submit()">
+                <option value="0"><?php echo Text::_('COM_CONTENT_API_GRABBER_FILTER_ALL_CATEGORIES'); ?></option>
+                <?php foreach ($this->remoteCategories as $cat) : ?>
+                    <option value="<?php echo (int) $cat->id; ?>" <?php echo $this->catId === (int) $cat->id ? 'selected' : ''; ?>>
+                        <?php echo $this->escape($cat->title); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <?php else : ?>
+            <input type="hidden" name="cat_id" id="cag_cat_id" value="<?php echo (int) $this->catId; ?>">
+        <?php endif; ?>
+
+        <?php if ($this->sourceId) : ?>
+        <div class="col-md-4">
+            <label for="cag_search" class="form-label visually-hidden"><?php echo Text::_('JSEARCH_FILTER'); ?></label>
+            <div class="input-group">
+                <input type="text" name="search" id="cag_search" class="form-control"
+                       placeholder="<?php echo $this->escape(Text::_('COM_CONTENT_API_GRABBER_FILTER_SEARCH_PLACEHOLDER')); ?>"
+                       value="<?php echo $this->escape($this->search); ?>">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <span class="icon-search" aria-hidden="true"></span>
+                </button>
+                <?php if ($this->search !== '') : ?>
+                    <a class="btn btn-outline-secondary"
+                       href="<?php echo Route::_('index.php?option=com_content_api_grabber&view=remote&source_id=' . (int) $this->sourceId . '&cat_id=' . (int) $this->catId . '&limit=' . (int) $this->limit); ?>"
+                       title="<?php echo Text::_('JSEARCH_FILTER_CLEAR'); ?>">
+                        <span class="icon-times" aria-hidden="true"></span>
+                    </a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 </form>
 
@@ -88,7 +128,11 @@ use Joomla\CMS\Router\Route;
                     </table>
 
                     <?php
-                    $pgBase = 'index.php?option=com_content_api_grabber&view=remote&source_id=' . (int) $this->sourceId . '&limit=' . (int) $this->limit;
+                    $pgBase = 'index.php?option=com_content_api_grabber&view=remote'
+                        . '&source_id=' . (int) $this->sourceId
+                        . '&limit=' . (int) $this->limit
+                        . '&cat_id=' . (int) $this->catId
+                        . ($this->search !== '' ? '&search=' . urlencode($this->search) : '');
                     $from   = $this->offset + 1;
                     $to     = $this->offset + \count($this->articles);
                     ?>
@@ -120,6 +164,15 @@ use Joomla\CMS\Router\Route;
                             <div class="control-group">
                                 <div class="control-label"><?php echo $this->form->getLabel($field); ?></div>
                                 <div class="controls"><?php echo $this->form->getInput($field); ?></div>
+                            </div>
+                        <?php endforeach; ?>
+                        <hr class="my-2">
+                        <?php foreach (['featured', 'skip_duplicates'] as $field) : ?>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <?php echo $this->form->getInput($field); ?>
+                                    <?php echo $this->form->getLabel($field); ?>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </fieldset>
