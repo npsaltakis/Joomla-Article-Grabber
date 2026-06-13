@@ -15,11 +15,33 @@ images) between your Joomla sites.
 
 Images (intro/full + inline) are downloaded locally and their paths rewritten automatically.
 
+## Features
+
+- **Search & category filter** — filter the remote article list by title/alias or by remote category before pulling.
+- **Tag transfer** — tags are read from the remote article and created locally when they don't exist yet.
+- **Date preservation** — `created`, `publish_up` and `publish_down` are carried over from the source article.
+- **Featured flag** — optionally mark imported articles as front-page featured in one click.
+- **Duplicate detection** — "Skip already imported" skips any article already present in the import log (matched by source + remote ID).
+- **Import history** — every pull/import is logged with its source, author, image results and a link to the created article.
+- **GitHub auto-update** — sites with the component installed see new releases under Extensions → Update.
+
 ## Screenshots
 
-**Pull articles from a remote site** — pick a source, browse its articles (paginated) and pull the selected ones into a local category/author:
+**Pull articles from a remote site** — pick a source, browse its articles (paginated, with search and category filter) and pull the selected ones into a local category/author:
 
 ![Pull Remote Articles](screenshots/1-remote-pull.png)
+
+**Search and category filter** — narrow the remote article list before selecting what to pull:
+
+![Search and category filter](screenshots/6-search-and-filter.png)
+
+**Pull options** — set the target category, author, published state, and optionally mark as featured or skip already-imported articles:
+
+![Pull options: featured and skip already imported](screenshots/7-pull-options.png)
+
+**Duplicate detection** — articles already in the import history are skipped; the summary shows Imported / Skipped / Failed:
+
+![Skip duplicate message](screenshots/8-skip-duplicate-message.png)
 
 **Manage remote sources** (API tokens stored encrypted) with a one-click connection test:
 
