@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-    Joomla update feed for com_content_api_grabber.
-    This file is regenerated automatically by .github/workflows/release.yml on each tag.
-    The manifest <updateservers> URL must point to the raw URL of THIS file on your main branch.
--->
 <updates>
     <update>
         <name>Joomla Article Grabber</name>
