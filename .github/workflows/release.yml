@@ -1,0 +1,82 @@
+name: Release
+
+# Tag a version to publish it:  git tag v1.2.0 && git push origin v1.2.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve version and repo
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "repo=$GITHUB_REPOSITORY" >> "$GITHUB_OUTPUT"
+          echo "zip=com_content_api_grabber-$VERSION.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Sync manifest <version> to the tag
+        run: |
+          sed -i -E "s#<version>[^<]+</version>#<version>${{ steps.meta.outputs.version }}</version>#" content_api_grabber.xml
+
+      - name: Regenerate update.xml feed
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          REPO="${{ steps.meta.outputs.repo }}"
+          cat > update.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <updates>
+              <update>
+                  <name>Joomla Article Grabber</name>
+                  <description>Transfer com_content articles (with images) between Joomla sites via REST pull or XML.</description>
+                  <element>com_content_api_grabber</element>
+                  <type>component</type>
+                  <version>${VERSION}</version>
+                  <infourl title="Joomla Article Grabber">https://github.com/${REPO}</infourl>
+                  <downloads>
+                      <downloadurl type="full" format="zip">https://github.com/${REPO}/releases/download/v${VERSION}/com_content_api_grabber-${VERSION}.zip</downloadurl>
+                  </downloads>
+                  <tags>
+                      <tag>stable</tag>
+                  </tags>
+                  <maintainer>Nick Psaltakis</maintainer>
+                  <maintainerurl>https://github.com/${REPO%%/*}</maintainerurl>
+                  <targetplatform name="joomla" version="(5|6)\.[0-9]+"/>
+                  <php_minimum>8.1</php_minimum>
+              </update>
+          </updates>
+          EOF
+
+      - name: Build installable package
+        run: |
+          mkdir -p dist
+          zip -rq -X "dist/${{ steps.meta.outputs.zip }}" . \
+            -x ".git/*" ".github/*" "update.xml" "README.md" ".gitignore" "dist/*"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Joomla Article Grabber ${{ steps.meta.outputs.version }}
+          generate_release_notes: true
+          files: dist/${{ steps.meta.outputs.zip }}
+
+      - name: Commit synced manifest + feed back to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add content_api_grabber.xml update.xml
+          git commit -m "chore: release ${{ steps.meta.outputs.version }} (sync manifest + update feed)" || echo "Nothing to commit"
+          git push origin HEAD:main

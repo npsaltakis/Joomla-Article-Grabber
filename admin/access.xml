@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<access component="com_content_api_grabber">
+    <section name="component">
+        <action name="core.admin" title="JACTION_ADMIN" />
+        <action name="core.manage" title="JACTION_MANAGE" />
+        <action name="core.options" title="JACTION_OPTIONS" />
+        <action name="grabber.export" title="COM_CONTENT_API_GRABBER_ACCESS_EXPORT" />
+        <action name="grabber.import" title="COM_CONTENT_API_GRABBER_ACCESS_IMPORT" />
+    </section>
+</access>

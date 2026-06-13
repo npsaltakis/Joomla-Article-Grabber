@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <fieldset name="import" label="COM_CONTENT_API_GRABBER_CONFIG_IMPORT_FIELDSET">
+        <field
+            name="image_folder"
+            type="text"
+            label="COM_CONTENT_API_GRABBER_CONFIG_IMAGE_FOLDER_LABEL"
+            description="COM_CONTENT_API_GRABBER_CONFIG_IMAGE_FOLDER_DESC"
+            default="images/grabbed"
+            filter="path"
+        />
+        <field
+            name="http_timeout"
+            type="number"
+            label="COM_CONTENT_API_GRABBER_CONFIG_HTTP_TIMEOUT_LABEL"
+            description="COM_CONTENT_API_GRABBER_CONFIG_HTTP_TIMEOUT_DESC"
+            default="20"
+            min="5"
+            max="120"
+        />
+    </fieldset>
+
+    <fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
+        <field
+            name="rules"
+            type="rules"
+            label="JCONFIG_PERMISSIONS_LABEL"
+            class="inputbox"
+            validate="rules"
+            filter="rules"
+            component="com_content_api_grabber"
+            section="component"
+        />
+    </fieldset>
+</config>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <field name="id" type="hidden" />
+
+    <fieldset name="source">
+        <field
+            name="name"
+            type="text"
+            label="COM_CONTENT_API_GRABBER_FIELD_SOURCE_NAME_LABEL"
+            description="COM_CONTENT_API_GRABBER_FIELD_SOURCE_NAME_DESC"
+            required="true"
+        />
+
+        <field
+            name="url"
+            type="url"
+            label="COM_CONTENT_API_GRABBER_FIELD_SOURCE_URL_LABEL"
+            description="COM_CONTENT_API_GRABBER_FIELD_SOURCE_URL_DESC"
+            hint="https://source-site.gr"
+            required="true"
+        />
+
+        <field
+            name="token"
+            type="text"
+            label="COM_CONTENT_API_GRABBER_FIELD_SOURCE_TOKEN_LABEL"
+            description="COM_CONTENT_API_GRABBER_FIELD_SOURCE_TOKEN_DESC"
+            autocomplete="new-password"
+            filter="raw"
+            maxlength="255"
+            size="90"
+        />
+
+        <field
+            name="default_catid"
+            type="category"
+            extension="com_content"
+            label="COM_CONTENT_API_GRABBER_FIELD_SOURCE_CATID_LABEL"
+            description="COM_CONTENT_API_GRABBER_FIELD_SOURCE_CATID_DESC"
+        >
+            <option value="0">COM_CONTENT_API_GRABBER_NONE</option>
+        </field>
+
+        <field
+            name="published"
+            type="radio"
+            layout="joomla.form.field.radio.switcher"
+            label="JSTATUS"
+            default="1"
+        >
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+        </field>
+    </fieldset>
+</form>
