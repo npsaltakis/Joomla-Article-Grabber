@@ -47,6 +47,16 @@ class HtmlView extends BaseHtmlView
         $this->limit    = max(5, min(100, (int) $input->getInt('limit', 20)));
         $this->offset   = max(0, (int) $input->getInt('offset', 0));
 
+        // Pre-select the source's saved default category in the pull form.
+        if ($this->sourceId && $this->form) {
+            foreach ($this->sources as $s) {
+                if ((int) $s->id === $this->sourceId && (int) $s->default_catid > 0) {
+                    $this->form->setValue('catid', null, (int) $s->default_catid);
+                    break;
+                }
+            }
+        }
+
         if ($this->sourceId) {
             try {
                 $page           = $model->getRemoteArticles($this->sourceId, $this->limit, $this->offset);

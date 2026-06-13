@@ -6,7 +6,7 @@
     <creationDate>2026-06</creationDate>
     <copyright>(C) 2026 Nick Psaltakis</copyright>
     <license>GNU GPL v2 or later</license>
-    <version>1.1.8</version>
+    <version>1.1.9</version>
     <description>COM_CONTENT_API_GRABBER_XML_DESCRIPTION</description>
 
     <namespace path="src">Nickpsal\Component\ContentApiGrabber</namespace>
@@ -37,6 +37,7 @@
         <submenu>
             <menu link="option=com_content_api_grabber&amp;view=remote">COM_CONTENT_API_GRABBER_SUBMENU_REMOTE</menu>
             <menu link="option=com_content_api_grabber&amp;view=sources">COM_CONTENT_API_GRABBER_SUBMENU_SOURCES</menu>
+            <menu link="option=com_content_api_grabber&amp;view=history">COM_CONTENT_API_GRABBER_SUBMENU_HISTORY</menu>
             <menu link="option=com_content_api_grabber&amp;view=export">COM_CONTENT_API_GRABBER_SUBMENU_EXPORT</menu>
             <menu link="option=com_content_api_grabber&amp;view=import">COM_CONTENT_API_GRABBER_SUBMENU_IMPORT</menu>
         </submenu>
