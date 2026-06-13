@@ -63,7 +63,7 @@ jobs:
         run: |
           mkdir -p dist
           zip -rq -X "dist/${{ steps.meta.outputs.zip }}" . \
-            -x ".git/*" ".github/*" "update.xml" "README.md" ".gitignore" "dist/*" "JED-LISTING.md"
+            -x ".git/*" ".github/*" "update.xml" "README.md" ".gitignore" "dist/*" "JED-LISTING.md" "CHANGELOG.md" "screenshots/*"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

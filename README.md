@@ -11,6 +11,26 @@ images) between your Joomla sites.
 
 Images (intro/full + inline) are downloaded locally and their paths rewritten automatically.
 
+## Screenshots
+
+**Pull articles from a remote site** — pick a source, browse its articles (paginated) and pull the selected ones into a local category/author:
+
+![Pull Remote Articles](screenshots/1-remote-pull.png)
+
+**Manage remote sources** (API tokens stored encrypted) with a one-click connection test:
+
+![Sources](screenshots/2-sources.png)
+
+![Edit source and test connection](screenshots/3-source-test-connection.png)
+
+**Import history** — every pull/import is logged with its source, author and image results:
+
+![Import History](screenshots/4-history.png)
+
+**Built-in updates** via Extensions → Update:
+
+![Updates](screenshots/5-update.png)
+
 ## Requirements
 
 - Joomla 5.x or 6.x
