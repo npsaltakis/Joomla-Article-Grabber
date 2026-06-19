@@ -3,6 +3,16 @@
 All notable changes to **Joomla Article Grabber** are documented here.
 This project adheres to semantic versioning.
 
+## 1.2.1
+- **Fix: "Read more" split lost on REST pull.** Joomla's content API exposes only
+  a combined `text` field (`introtext . ' ' . fulltext`) and drops the read-more
+  separator, so pulled articles dumped the whole body into the intro text. The
+  pull now splits the body back on `<hr id="system-readmore" />` to restore the
+  intro/full break.
+- **New companion plugin `plg_content_apigrabber`** (install on the SOURCE site):
+  re-inserts the read-more separator into the content API output, for API
+  requests only — the site frontend is untouched.
+
 ## 1.2.0
 - **Search & category filter** on the remote article list: search by title/alias
   (`filter[search]`) and filter by remote category (`filter[catid]`).

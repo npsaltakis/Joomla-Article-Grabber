@@ -300,9 +300,24 @@ class RemoteModel extends FormModel
         $intro = (string) ($a->introtext ?? '');
         $full  = (string) ($a->fulltext ?? '');
 
-        // The list/standard API returns a combined "text"; use it when intro/full are empty.
+        // Stock Joomla's content API never exposes introtext/fulltext separately:
+        // it returns a single combined "text" (introtext . ' ' . fulltext), so the
+        // separate fields usually arrive empty. Fall back to the combined body.
         if ($intro === '' && $full === '' && !empty($a->text)) {
             $intro = (string) $a->text;
+        }
+
+        // Recover the "Read more" split. Core drops the <hr id="system-readmore" />
+        // separator when it builds "text", but the companion plugin on the source
+        // (plg_content_apigrabber) re-inserts it. When the body still carries the
+        // marker, split it back into intro/full so the imported article keeps its
+        // read-more break instead of dumping everything into the intro text.
+        $marker = '#<hr\b[^>]*\bid\s*=\s*(["\'])system-readmore\1[^>]*>#i';
+
+        if ($full === '' && preg_match($marker, $intro)) {
+            $parts = preg_split($marker, $intro, 2);
+            $intro = (string) ($parts[0] ?? '');
+            $full  = (string) ($parts[1] ?? '');
         }
 
         // --- Tags ---

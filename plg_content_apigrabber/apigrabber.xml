@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="content" method="upgrade">
+    <name>plg_content_apigrabber</name>
+    <author>Nick Psaltakis</author>
+    <authorEmail>nickpsal@gmail.com</authorEmail>
+    <creationDate>2026-06</creationDate>
+    <copyright>(C) 2026 Nick Psaltakis</copyright>
+    <license>GNU GPL v2 or later</license>
+    <version>1.0.0</version>
+    <description>PLG_CONTENT_APIGRABBER_XML_DESCRIPTION</description>
+
+    <namespace path="src">Nickpsal\Plugin\Content\ApiGrabber</namespace>
+
+    <files>
+        <folder plugin="apigrabber">services</folder>
+        <folder>src</folder>
+        <folder>language</folder>
+    </files>
+
+    <languages>
+        <language tag="en-GB">language/en-GB/plg_content_apigrabber.ini</language>
+        <language tag="en-GB">language/en-GB/plg_content_apigrabber.sys.ini</language>
+    </languages>
+</extension>
