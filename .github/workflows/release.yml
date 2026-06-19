@@ -25,11 +25,12 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "repo=$GITHUB_REPOSITORY" >> "$GITHUB_OUTPUT"
-          echo "zip=com_content_api_grabber-$VERSION.zip" >> "$GITHUB_OUTPUT"
 
       - name: Sync manifest <version> to the tag
         run: |
-          sed -i -E "s#<version>[^<]+</version>#<version>${{ steps.meta.outputs.version }}</version>#" content_api_grabber.xml
+          for f in content_api_grabber.xml plg_content_apigrabber/apigrabber.xml pkg_articlegrabber.xml; do
+            sed -i -E "0,/<version>[^<]+<\/version>/s##<version>${{ steps.meta.outputs.version }}</version>#" "$f"
+          done
 
       - name: Regenerate update.xml feed
         run: |
@@ -59,11 +60,8 @@ jobs:
           </updates>
           EOF
 
-      - name: Build installable package
-        run: |
-          mkdir -p dist
-          zip -rq -X "dist/${{ steps.meta.outputs.zip }}" . \
-            -x ".git/*" ".github/*" "update.xml" "README.md" ".gitignore" "dist/*" "JED-LISTING.md" "CHANGELOG.md" "screenshots/*" "logo.png" "logo.svg"
+      - name: Build installable packages
+        run: bash build.sh "${{ steps.meta.outputs.version }}"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -71,12 +69,15 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Joomla Article Grabber ${{ steps.meta.outputs.version }}
           generate_release_notes: true
-          files: dist/${{ steps.meta.outputs.zip }}
+          files: |
+            dist/pkg_articlegrabber-${{ steps.meta.outputs.version }}.zip
+            dist/com_content_api_grabber-${{ steps.meta.outputs.version }}.zip
+            dist/plg_content_apigrabber-${{ steps.meta.outputs.version }}.zip
 
       - name: Commit synced manifest + feed back to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add content_api_grabber.xml update.xml
-          git commit -m "chore: release ${{ steps.meta.outputs.version }} (sync manifest + update feed)" || echo "Nothing to commit"
+          git add content_api_grabber.xml plg_content_apigrabber/apigrabber.xml pkg_articlegrabber.xml update.xml
+          git commit -m "chore: release ${{ steps.meta.outputs.version }} (sync manifests + update feed)" || echo "Nothing to commit"
           git push origin HEAD:main

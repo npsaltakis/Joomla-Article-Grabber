@@ -64,9 +64,29 @@ Images (intro/full + inline) are downloaded locally and their paths rewritten au
 - For REST pull, the **remote** site must have the *Web Services - Articles* and
   *API Authentication - Joomla Token* plugins enabled, and a user API token.
 
+## "Read more" over the REST API
+
+Joomla's content API only exposes a single combined `text` field and drops the
+read-more separator, so a plain REST pull would dump the whole body into the
+intro text and lose the intro/full split. The bundled **`plg_content_apigrabber`**
+plugin fixes this: installed and enabled **on the source site**, it re-inserts the
+`<hr id="system-readmore" />` marker into API responses only (the site frontend is
+untouched), and the grabber splits it back when pulling.
+
 ## Install
 
-Extensions → Install → Upload the `com_content_api_grabber-x.y.z.zip` package.
+**Recommended — install the package** (component + companion plugin in one go):
+Extensions → Install → Upload `pkg_articlegrabber-x.y.z.zip`.
+
+- On a **target** site (where you pull articles into): use the component; the
+  plugin can stay disabled.
+- On a **source** site (whose articles are pulled over REST): enable
+  *Content - Article Grabber (API Read More)* under Plugins to preserve the
+  read-more split.
+
+Standalone zips are also published if you only need one piece:
+`com_content_api_grabber-x.y.z.zip` (component) and
+`plg_content_apigrabber-x.y.z.zip` (plugin).
 
 ## Updates (maintainers)
 
@@ -78,8 +98,8 @@ git tag v1.2.0
 git push origin v1.2.0
 ```
 
-The workflow builds the package, publishes a GitHub Release, syncs the manifest `<version>`
-and regenerates `update.xml`. Sites that have the component installed then see the update
+The workflow runs `build.sh`, publishes a GitHub Release with the package and the two
+standalone zips, syncs the `<version>` in every manifest and regenerates `update.xml`. Sites that have the component installed then see the update
 under **Extensions → Update**.
 
 > Set the `<updateservers>` URL in `content_api_grabber.xml` to the raw URL of `update.xml`

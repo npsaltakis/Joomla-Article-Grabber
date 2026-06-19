@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="package" method="upgrade">
+    <name>Joomla Article Grabber</name>
+    <packagename>articlegrabber</packagename>
+    <author>Nick Psaltakis</author>
+    <authorEmail>nickpsal@gmail.com</authorEmail>
+    <authorUrl>https://github.com/npsaltakis</authorUrl>
+    <creationDate>2026-06</creationDate>
+    <copyright>(C) 2026 Nick Psaltakis</copyright>
+    <license>GNU GPL v2 or later</license>
+    <version>1.2.1</version>
+    <url>https://github.com/npsaltakis/Joomla-Article-Grabber</url>
+    <packager>Nick Psaltakis</packager>
+    <packagerurl>https://github.com/npsaltakis</packagerurl>
+    <description>
+        Transfer com_content articles (with images, tags and dates) between Joomla
+        sites via REST pull or XML. This package installs the admin component on
+        the TARGET site and the companion content plugin which, on the SOURCE
+        site, preserves the article "Read more" split in the REST API output.
+        Enable the plugin only on source sites.
+    </description>
+
+    <files folder="packages">
+        <file type="component" id="com_content_api_grabber">com_content_api_grabber.zip</file>
+        <file type="plugin" id="apigrabber" group="content">plg_content_apigrabber.zip</file>
+    </files>
+</extension>
