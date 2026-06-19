@@ -9,6 +9,10 @@
     <version>1.2.1</version>
     <description>PLG_CONTENT_APIGRABBER_XML_DESCRIPTION</description>
 
+    <updateservers>
+        <server type="extension" priority="1" name="Joomla Article Grabber Updates">https://raw.githubusercontent.com/npsaltakis/Joomla-Article-Grabber/main/update.xml</server>
+    </updateservers>
+
     <namespace path="src">Nickpsal\Plugin\Content\ApiGrabber</namespace>
 
     <files>

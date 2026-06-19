@@ -57,6 +57,25 @@ jobs:
                   <targetplatform name="joomla" version="(5|6)\.[0-9]+"/>
                   <php_minimum>8.1</php_minimum>
               </update>
+              <update>
+                  <name>plg_content_apigrabber</name>
+                  <description>Source-site companion plugin: preserves the article Read more split in the content REST API output.</description>
+                  <element>apigrabber</element>
+                  <type>plugin</type>
+                  <folder>content</folder>
+                  <version>${VERSION}</version>
+                  <infourl title="Joomla Article Grabber">https://github.com/${REPO}</infourl>
+                  <downloads>
+                      <downloadurl type="full" format="zip">https://github.com/${REPO}/releases/download/v${VERSION}/plg_content_apigrabber-${VERSION}.zip</downloadurl>
+                  </downloads>
+                  <tags>
+                      <tag>stable</tag>
+                  </tags>
+                  <maintainer>Nick Psaltakis</maintainer>
+                  <maintainerurl>https://github.com/${REPO%%/*}</maintainerurl>
+                  <targetplatform name="joomla" version="(5|6)\.[0-9]+"/>
+                  <php_minimum>8.1</php_minimum>
+              </update>
           </updates>
           EOF
 
