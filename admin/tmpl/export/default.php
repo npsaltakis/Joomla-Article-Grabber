@@ -1,9 +1,11 @@
-<?php
+﻿<?php
 /**
  * @package     Com_ContentApiGrabber
  * @subpackage  Templates
  *
  * @var  \Nickpsal\Component\ContentApiGrabber\Administrator\View\Export\HtmlView  $this
+ * @copyright   (C) 2026 Nick Psaltakis
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;

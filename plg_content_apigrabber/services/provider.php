@@ -1,7 +1,9 @@
-<?php
+﻿<?php
 /**
  * @package     plg_content_apigrabber
  * @subpackage  Services
+ * @copyright   (C) 2026 Nick Psaltakis
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 defined('_JEXEC') or die;

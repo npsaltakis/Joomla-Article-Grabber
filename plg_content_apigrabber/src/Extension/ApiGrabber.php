@@ -1,7 +1,9 @@
-<?php
+﻿<?php
 /**
  * @package     plg_content_apigrabber
  * @subpackage  Extension
+ * @copyright   (C) 2026 Nick Psaltakis
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
  */
 
 namespace Nickpsal\Plugin\Content\ApiGrabber\Extension;
