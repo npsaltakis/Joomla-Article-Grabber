@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @package     plg_content_apigrabber
  * @subpackage  Extension

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @package     Com_ContentApiGrabber
  * @subpackage  View

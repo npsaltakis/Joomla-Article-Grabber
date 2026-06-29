@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * @package     com_content_api_grabber
  * @subpackage  Model
