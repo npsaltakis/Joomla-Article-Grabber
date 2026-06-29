@@ -100,6 +100,7 @@ class ArticleImporter
             }
         }
 
+        // Plain string substitution: replace remote image URLs with local paths.
         $introtext  = strtr($introtext, $replacements);
         $fulltext   = strtr($fulltext, $replacements);
         $introImage = $replacements[$images['image_intro'] ?? ''] ?? ($images['image_intro'] ?? '');
